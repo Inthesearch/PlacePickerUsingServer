@@ -7,14 +7,19 @@ import logoImg from "./assets/logo.png";
 import AvailablePlaces from "./components/AvailablePlaces.jsx";
 import { fetchUserPlaces, updateUserPlaces } from "./https.js";
 import Error from "./components/Error.jsx";
+import { useFetch } from "./hooks/useFetch.js";
 
 function App() {
   const selectedPlace = useRef();
 
-  const [userPlaces, setUserPlaces] = useState([]);
   const [errorUpdateMessage, setErrorUpdateMessage] = useState();
-  const [isFetching, setIsFetching] = useState(false);
-  const [isError, setIsError] = useState();
+
+  const {
+    isFetching,
+    fetchedData: userPlaces,
+    setFetchData: setUserPlaces,
+    isError,
+  } = useFetch(fetchUserPlaces, []);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
@@ -27,20 +32,7 @@ function App() {
     setModalIsOpen(false);
   }
 
-  useEffect(() => {
-    setIsFetching(true);
-    async function fetchSavedPlaces() {
-      try {
-        setUserPlaces(await fetchUserPlaces());
-      } catch (error) {
-        setIsError({
-          message: error.message || "Currenty not able to fetch data",
-        });
-      }
-    }
-    setIsFetching(false);
-    fetchSavedPlaces();
-  }, []);
+  useFetch(fetchUserPlaces);
 
   async function handleSelectPlace(selectedPlace) {
     setUserPlaces((prevPickedPlaces) => {
@@ -50,7 +42,7 @@ function App() {
       if (prevPickedPlaces.some((place) => place.id === selectedPlace.id)) {
         return prevPickedPlaces;
       }
-      console.log("Places picked");
+
       return [selectedPlace, ...prevPickedPlaces];
     });
 
@@ -125,6 +117,8 @@ function App() {
             title="I'd like to visit ..."
             fallbackText="Select the places you would like to visit below."
             places={userPlaces}
+            isLoading={isFetching}
+            loadingText="Fetching places to pick."
             onSelectPlace={handleStartRemovePlace}
           />
         )}
